@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./css/login-form.css" />
+    <link rel="stylesheet" href="./css/util.css" />
+</head>
+
+<body>
+    <div class="container-login100">
+        <div class="wrap-login100 p-t-40 p-b-40">
+            <form class="login100-form validate-form flex-sb flex-w" id="login-form">
+                <span class="login100-form-title p-b-51"> Вхід </span>
+                <div class="wrap-input100 validate-input m-b-16" data-validate="Username is required">
+                    <input id="username" class="input100" type="text" name="login" placeholder="Username" />
+                    <span class="focus-input100"></span>
+                </div>
+                <div class="wrap-input100 validate-input m-b-16" data-validate="Password is required">
+                    <input id="password" class="input100" type="password" name="password" placeholder="Password" />
+                    <span class="focus-input100"></span>
+                </div>
+                <div class="container-login100-form-btn m-t-17">
+                    <button class="login100-form-btn" id="submit" form="login-form" type="button">
+                        Авторизуватись
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.getElementById("submit").addEventListener("click", () => {
+            let login = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+            console.log({ login, password })
+            fetch("./api/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json;charset=utf-8",
+                },
+                body: JSON.stringify({ login, password }),
+            })
+                .then((res) => {
+                    if (res.status == 200) {
+                        window.location.href = "./admin-panel";
+                    } else {
+                        alert("Дані логіну не співпадають")
+                    }
+                })
+                .catch(function (err) {
+                    console.info(err);
+                });
+        });
+    </script>
+</body>
+
+</html>

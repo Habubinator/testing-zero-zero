@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="css/admin-panel.css" />
+</head>
+
+<body>
+    <div>
+        <section id="addDeleteUsers">
+            <div>
+                <div class="center naming">Добавити/Видалити @username</div>
+                <table>
+                    <tr>
+                        <td>
+                            <input type="text" id="textInput" placeholder="Введіть @username користувача" />
+                        </td>
+                        <td>
+                            <button class="button-17" onclick="addUser()">
+                                Додати
+                            </button>
+                        </td>
+                    </tr>
+                </table>
+                <table id="itemList"></table>
+            </div>
+        </section>
+    </div>
+    <div>
+        <section id="sendMessageSection">
+            <div>
+                <div class="center naming">Зробити оголошення</div>
+                <table>
+                    <tr>
+                        <td>
+                            Написати...
+                            <select id="messageReciever" onchange="document.getElementById('chat_id').value = ''">
+                                <option value="all">Усім</option>
+                                <option value="user">Користувачу</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" id="chat_id" placeholder="Введіть id користувача/чату" />
+                        </td>
+                    </tr>
+                </table>
+                <table>
+                    <tr>
+                        <td>
+                            <textarea class="messageMargin" id="messageText" cols="50" rows="20"
+                                placeholder="Введіть повідомлення..."></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input class="messageMargin leftMarginMessage" type="button" id="sendMessage"
+                                value="Відправити" />
+                        </td>
+                    </tr>
+                </table>
+                <table id="itemList"></table>
+            </div>
+        </section>
+    </div>
+    <script src="js/admin-panel.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId          String  @id @map("user_id") @db.VarChar(32)
+  username        String? @db.VarChar(32)
+  lastApiTrigger  BigInt? @map("last_api_trigger")
+  active          Boolean?
+  
+  chats           Chat[]
+  
+  @@map("users")
+}
+
+model PendingUser {
+  id       Int     @id @default(autoincrement())
+  username String? @db.VarChar(32)
+  
+  @@map("pending_users")
+}
+
+model Chat {
+  chatId   String  @id @map("chat_id") @db.VarChar(32)
+  chatName String? @map("chat_name") @db.VarChar(64)
+  userId   String? @map("user_id") @db.VarChar(32)
+  active   Boolean?
+  
+  user                     User?                     @relation(fields: [userId], references: [userId])
+  goalAwaitNotifications   GoalAwaitNotification[]
+  
+  @@map("chats")
+}
+
+model GoalAwaitNotification {
+  id        Int     @id @default(autoincrement())
+  chatId    String? @map("chat_id") @db.VarChar(32)
+  matchId   Int?    @map("match_id")
+  messageId String? @map("message_id") @db.VarChar(32)
+  
+  chat      Chat?   @relation(fields: [chatId], references: [chatId])
+  
+  @@map("goal_await_notifications")
+}
+
+model Admin {
+  id           Int     @id @default(autoincrement())
+  login        String? @db.VarChar(32)
+  userPassword String? @map("user_password") @db.VarChar(32)
+  
+  @@map("admins")
+}
+
+model Stats {
+  matchId                    Int     @id @map("match_id")
+  country                    String? @db.VarChar(32)
+  league                     String? @db.VarChar(32)
+  startTime                  String? @map("start_time") @db.VarChar(32)
+  homeTeam                   String? @map("home_team") @db.VarChar(32)
+  awayTeam                   String? @map("away_team") @db.VarChar(32)
+  signalTime                 String? @map("signal_time") @db.VarChar(8)
+  homeScore                  Int?    @map("home_score")
+  awayScore                  Int?    @map("away_score")
+  goalTime                   String? @map("goal_time") @db.VarChar(8)
+  coefficient                Float?
+  homeScoreAtEnd             Int?    @map("home_score_at_end")
+  awayScoreAtEnd             Int?    @map("away_score_at_end")
+  cornersAtSignal            Int?    @map("corners_at_signal")
+  cornersAtEnd               Int?    @map("corners_at_end")
+  yellowcardsAtSignal        Int?    @map("yellowcards_at_signal")
+  yellowcardsAtEnd           Int?    @map("yellowcards_at_end")
+  shotsOnTargetAtSignal      Int?    @map("shots_on_target_at_signal")
+  shotsOnTargetAtEnd         Int?    @map("shots_on_target_at_end")
+  dangerousAttacksAtSignal   Int?    @map("dangerous_attacks_at_signal")
+  dangerousAttacksAtEnd      Int?    @map("dangerous_attacks_at_end")
+  redcardsAtSignal           Int?    @map("redcards_at_signal")
+  redcardsAtEnd              Int?    @map("redcards_at_end")
+  
+  @@map("stats")
+}
