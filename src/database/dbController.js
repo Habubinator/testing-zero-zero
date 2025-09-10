@@ -2,11 +2,12 @@ const db = require("./dbPool");
 const logger = require("./../logger");
 
 class DBController {
-    // Створення юзера
+    // ===== USER MANAGEMENT =====
+
     async createUser(chat_id, username) {
         const query = `
-      INSERT INTO users (user_id, username, active, last_api_trigger)
-      VALUES (?, ?, TRUE, 0)`;
+            INSERT INTO users (user_id, username, active, last_api_trigger)
+            VALUES (?, ?, TRUE, 0)`;
         try {
             const [rows, fields] = await db.query(query, [chat_id, username]);
             return rows;
@@ -16,25 +17,8 @@ class DBController {
         }
     }
 
-    // Зчитування юзерів за статусом активності
-    async getUsersByActiveStatus(isActive) {
-        const query = `
-      SELECT * FROM users
-      WHERE active = ?`;
-        try {
-            const [rows, fields] = await db.query(query, [isActive]);
-            return rows;
-        } catch (error) {
-            logger.logError(error, query);
-            throw error;
-        }
-    }
-
-    // Зчитування юзерів за статусом активності
     async getUserById(id) {
-        const query = `
-      SELECT * FROM users
-      WHERE user_id = ?`;
+        const query = `SELECT * FROM users WHERE user_id = ?`;
         try {
             const [rows, fields] = await db.query(query, [id]);
             return rows;
@@ -45,10 +29,7 @@ class DBController {
     }
 
     async getUserByUsername(username) {
-        const query = `
-            SELECT *
-            FROM users
-            WHERE username = ?`;
+        const query = `SELECT * FROM users WHERE username = ?`;
         try {
             const [rows, fields] = await db.query(query, [username]);
             return rows[0];
@@ -58,7 +39,6 @@ class DBController {
         }
     }
 
-    // Зчитування всіх юзерів
     async getAllUsers() {
         const query = "SELECT * FROM users";
         try {
@@ -70,32 +50,10 @@ class DBController {
         }
     }
 
-    // Зміни статусу active у юзера
-    async updateUserActiveStatus(chat_id, isActive) {
-        const query = `
-      UPDATE users
-      SET active = ?
-      WHERE user_id = ?`;
-        try {
-            const [rows, fields] = await db.query(query, [isActive, chat_id]);
-            return rows;
-        } catch (error) {
-            logger.logError(error, query);
-            throw error;
-        }
-    }
-
-    // Зміни last_api_trigger у юзера
     async updateUserLastApiTrigger(user_id, last_api_trigger) {
-        const query = `
-      UPDATE users
-      SET last_api_trigger = ?
-      WHERE user_id = ?`;
+        const query = `UPDATE users SET last_api_trigger = ? WHERE user_id = ?`;
         try {
-            const [rows, fields] = await db.query(query, [
-                last_api_trigger,
-                user_id,
-            ]);
+            const [rows, fields] = await db.query(query, [last_api_trigger, user_id]);
             return rows;
         } catch (error) {
             logger.logError(error, query);
@@ -103,25 +61,25 @@ class DBController {
         }
     }
 
-    // Видалення юзера
     async deleteUser(user_id) {
-    try {
-        const [chats] = await db.query(`SELECT chat_id FROM chats WHERE user_id = ?`, [user_id]);
-        const chatIds = chats.map(c => c.chat_id);
+        try {
+            const [chats] = await db.query(`SELECT chat_id FROM chats WHERE user_id = ?`, [user_id]);
+            const chatIds = chats.map(c => c.chat_id);
 
-        if (chatIds.length > 0) {
-            await db.query(`DELETE FROM goal_await_notifications WHERE chat_id IN (?)`, [chatIds]);
+            if (chatIds.length > 0) {
+                await db.query(`DELETE FROM notifications WHERE chat_id IN (?)`, [chatIds]);
+            }
+            await db.query(`DELETE FROM chats WHERE user_id = ?`, [user_id]);
+            const [rows] = await db.query(`DELETE FROM users WHERE user_id = ?`, [user_id]);
+            return rows;
+        } catch (error) {
+            logger.logError(error, `Error deleting user ${user_id}`);
+            throw error;
         }
-        await db.query(`DELETE FROM chats WHERE user_id = ?`, [user_id]);
-        const [rows] = await db.query(`DELETE FROM users WHERE user_id = ?`, [user_id]);
-        return rows;
-    } catch (error) {
-        logger.logError(error, `Error deleting user ${user_id}`);
-        throw error;
     }
-	}
 
-    // Додавання користувача до таблиці pending_users
+    // ===== PENDING USERS MANAGEMENT =====
+
     async createPendingUser(username) {
         const query = "INSERT INTO pending_users (username) VALUES (?)";
         try {
@@ -133,7 +91,6 @@ class DBController {
         }
     }
 
-    // Отримання користувача з таблиці pending_users за вказаним username
     async getPendingUserByUsername(username) {
         const query = "SELECT * FROM pending_users WHERE username = ?";
         try {
@@ -145,7 +102,6 @@ class DBController {
         }
     }
 
-    // Видалення користувача з таблиці pending_users за вказаним username
     async deletePendingUserByUsername(username) {
         const query = "DELETE FROM pending_users WHERE username = ?";
         try {
@@ -158,9 +114,7 @@ class DBController {
     }
 
     async getAllPendingUsers() {
-        const query = `
-            SELECT *
-            FROM pending_users`;
+        const query = `SELECT * FROM pending_users`;
         try {
             const [rows, fields] = await db.query(query);
             return rows;
@@ -170,7 +124,8 @@ class DBController {
         }
     }
 
-    // Знайти всі чати
+    // ===== CHAT MANAGEMENT =====
+
     async getAllChats() {
         const query = "SELECT * FROM chats";
         try {
@@ -182,19 +137,17 @@ class DBController {
         }
     }
 
-    // Знайти чат за його chat_id
     async getChatById(chatId) {
         const query = "SELECT * FROM chats WHERE chat_id = ?";
         try {
             const [rows, fields] = await db.query(query, [chatId]);
-            return rows.length ? rows[0] : null; // Ви повертаєте перший знайдений рядок, оскільки chat_id - унікальний ключ
+            return rows.length ? rows[0] : null;
         } catch (error) {
             logger.logError(error, query);
             throw error;
         }
     }
 
-    // Знайти всі активні або неактивні чати
     async getChatsByActivity(isActive) {
         const query = "SELECT * FROM chats WHERE active = ?";
         try {
@@ -206,7 +159,6 @@ class DBController {
         }
     }
 
-    // Змінити статус активності чату за його chat_id
     async changeChatActivity(chatId, isActive) {
         const query = "UPDATE chats SET active = ? WHERE chat_id = ?";
         try {
@@ -218,16 +170,10 @@ class DBController {
         }
     }
 
-    // Додати новий чат
     async createChat(chatId, chatName, userId) {
-        const query =
-            "INSERT INTO chats (chat_id, chat_name, user_id, active) VALUES (?, ?, ?, true)";
+        const query = "INSERT INTO chats (chat_id, chat_name, user_id, active) VALUES (?, ?, ?, true)";
         try {
-            const [rows, fields] = await db.query(query, [
-                chatId,
-                chatName,
-                userId,
-            ]);
+            const [rows, fields] = await db.query(query, [chatId, chatName, userId]);
             return rows;
         } catch (error) {
             logger.logError(error, query);
@@ -235,39 +181,10 @@ class DBController {
         }
     }
 
-    async deleteChatsByUserId(user_id) {
-        const query = `
-            DELETE FROM chats
-            WHERE user_id = ?`;
-        try {
-            const [result, fields] = await db.query(query, [user_id]);
-            return result;
-        } catch (error) {
-            logger.logError(error, query);
-            throw error;
-        }
-    }
-
-    async deleteChatByChatId(chat_id) {
-        const query = `
-            DELETE FROM chats
-            WHERE chat_id = ?`;
-        try {
-            const [result, fields] = await db.query(query, [chat_id]);
-            return result;
-        } catch (error) {
-            logger.logError(error, query);
-            throw error;
-        }
-    }
-
-    // Перевірка кількості активних чатів юзера
     async countActiveChatsByUserId(userId) {
-        const query =
-            "SELECT COUNT(*) AS active_chats_count FROM chats WHERE user_id = ? AND active = true";
+        const query = "SELECT COUNT(*) AS active_chats_count FROM chats WHERE user_id = ? AND active = true";
         try {
             const [rows, fields] = await db.query(query, [userId]);
-            // Повертаємо кількість активних чатів як ціле число
             return rows[0].active_chats_count;
         } catch (error) {
             logger.logError(error, query);
@@ -275,56 +192,15 @@ class DBController {
         }
     }
 
-    // Додати статистику матчу до таблиці
-    async createMatchStats({
-        match_id,
-        country,
-        league,
-        start_time,
-        home_team,
-        away_team,
-        signal_time,
-        home_score,
-        away_score,
-        coefficient,
-        corners_at_signal,
-        yellowcards_at_signal,
-        shots_on_target_at_signal,
-        dangerous_attacks_at_signal,
-        redcards_at_signal,
-    }) {
-        const query = `INSERT INTO stats (match_id, country, league, start_time, home_team, away_team, signal_time, home_score, away_score, coefficient, corners_at_signal, yellowcards_at_signal, shots_on_target_at_signal, dangerous_attacks_at_signal, redcards_at_signal)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        try {
-            const [rows, fields] = await db.query(query, [
-                match_id,
-                country,
-                league,
-                start_time,
-                home_team,
-                away_team,
-                signal_time,
-                home_score,
-                away_score,
-                coefficient,
-                corners_at_signal,
-                yellowcards_at_signal,
-                shots_on_target_at_signal,
-                dangerous_attacks_at_signal,
-                redcards_at_signal,
-            ]);
-            return rows;
-        } catch (error) {
-            logger.logError(error, query);
-            console.log(error);
-        }
-    }
+    // ===== NOTIFICATION MANAGEMENT =====
 
-    // Знайти всі статистики з таблиці
-    async getAllStats() {
-        const query = "SELECT * FROM stats";
+    // Create notification
+    async createNotification(chatId, matchId, messageId, patterns) {
+        const query = `
+            INSERT INTO notifications (chat_id, match_id, message_id, patterns, created_at)
+            VALUES (?, ?, ?, ?, NOW())`;
         try {
-            const [rows, fields] = await db.query(query);
+            const [rows, fields] = await db.query(query, [chatId, matchId, messageId, patterns]);
             return rows;
         } catch (error) {
             logger.logError(error, query);
@@ -332,110 +208,9 @@ class DBController {
         }
     }
 
-    // Знайти статистику по айді матчу
-    async getStatsByMatchId(match_id) {
-        const query = "SELECT * FROM stats WHERE match_id = ?";
-        try {
-            const [rows, fields] = await db.query(query, [match_id]);
-            return rows[0]; // Возвращает первую найденную запись, так как match_id уникальный
-        } catch (error) {
-            logger.logError(error, query);
-            throw error;
-        }
-    }
-
-    // Обновить goal_time по match_id НЕ ИСПОЛЬЗУЕТСЯ ПОСЛЕ РЕФАКТОРИНГА
-    async updateGoalTime({ match_id, goal_time }) {
-        const query = `UPDATE stats SET goal_time = ? WHERE match_id = ?`;
-        try {
-            const [rows, fields] = await db.query(query, [goal_time, match_id]);
-            return rows;
-        } catch (error) {
-            logger.logError(error, query);
-            throw error;
-        }
-    }
-
-    // Оновити дані _at_end по match_id НЕ ИСПОЛЬЗУЕТСЯ ПОСЛЕ РЕФАКТОРИНГА
-    async updateStatsEndData({
-        match_id,
-        goal_time,
-        home_score_at_end,
-        away_score_at_end,
-        corners_at_end,
-        yellowcards_at_end,
-        shots_on_target_at_end,
-        dangerous_attacks_at_end,
-    }) {
-        const query = `UPDATE stats SET 
-      goal_time = ?,
-      home_score_at_end = ?,
-      away_score_at_end = ?,
-      corners_at_end = ?,
-      yellowcards_at_end = ?,
-      shots_on_target_at_end = ?,
-      dangerous_attacks_at_end = ?
-      WHERE match_id = ?`;
-        try {
-            const [rows, fields] = await db.query(query, [
-                goal_time,
-                home_score_at_end,
-                away_score_at_end,
-                corners_at_end,
-                yellowcards_at_end,
-                shots_on_target_at_end,
-                dangerous_attacks_at_end,
-                match_id,
-            ]);
-            return rows;
-        } catch (error) {
-            logger.logError(error, query);
-            throw error;
-        }
-    }
-
-    async deleteStatsByMatchId(match_id) {
-        const query = "DELETE FROM stats WHERE match_id = ?";
-        try {
-            const [rows, fields] = await db.query(query, [match_id]);
-            return rows;
-        } catch (error) {
-            logger.logError(error, query);
-            throw error;
-        }
-    }
-
-    async createNotification(chatId, matchId, messageId) {
-        const query =
-            "INSERT INTO goal_await_notifications (chat_id, match_id, message_id) VALUES (?, ?, ?)";
-        try {
-            const [rows, fields] = await db.query(query, [
-                chatId,
-                matchId,
-                messageId,
-            ]);
-            return rows;
-        } catch (error) {
-            logger.logError(error, query);
-            console.log(error);
-        }
-    }
-
-    async getNotification(chatId, matchId) {
-        const query =
-            "SELECT * FROM goal_await_notifications WHERE chat_id = ? AND match_id = ?";
-        try {
-            const [rows, fields] = await db.query(query, [chatId, matchId]);
-            return rows;
-        } catch (error) {
-            logger.logError(error, query);
-            throw error;
-        }
-    }
-
-    async getNotificationsByMatchID(matchId) {
-        const query =
-            "SELECT * FROM goal_await_notifications WHERE match_id = ?";
+    // Get notifications by match ID
+    async getNotificationsByMatchId(matchId) {
+        const query = "SELECT * FROM notifications WHERE match_id = ?";
         try {
             const [rows, fields] = await db.query(query, [matchId]);
             return rows;
@@ -445,8 +220,9 @@ class DBController {
         }
     }
 
+    // Delete notifications by match ID
     async deleteNotificationsByMatchId(matchId) {
-        const query = "DELETE FROM goal_await_notifications WHERE match_id = ?";
+        const query = "DELETE FROM notifications WHERE match_id = ?";
         try {
             const [rows, fields] = await db.query(query, [matchId]);
             return rows;
@@ -456,10 +232,16 @@ class DBController {
         }
     }
 
-    async deleteNotificationsByChatId(chatId) {
-        const query = "DELETE FROM goal_await_notifications WHERE chat_id = ?";
+    // ===== MATCH PROCESSING =====
+
+    // Mark match as processed for pattern detection
+    async markMatchAsProcessed(matchId, patterns) {
+        const query = `
+            INSERT INTO processed_matches (match_id, patterns, processed_at, status)
+            VALUES (?, ?, NOW(), 'signal_sent')
+            ON DUPLICATE KEY UPDATE patterns = VALUES(patterns), processed_at = NOW()`;
         try {
-            const [rows, fields] = await db.query(query, [chatId]);
+            const [rows, fields] = await db.query(query, [matchId, patterns]);
             return rows;
         } catch (error) {
             logger.logError(error, query);
@@ -467,60 +249,118 @@ class DBController {
         }
     }
 
-    async deleteNotificationById(notificationId) {
-        const query = "DELETE FROM goal_await_notifications WHERE id = ?";
-        try {
-            const [rows, fields] = await db.query(query, [notificationId]);
-            return rows;
-        } catch (error) {
-            logger.logError(error, query);
-            throw error;
-        }
-    }
-
-    async createAdmin(login, password) {
-        const query = `INSERT INTO admins (login, user_password) VALUES (?, ?)`;
-        try {
-            const [rows, fields] = await db.query(query, [login, password]);
-            return rows;
-        } catch (error) {
-            logger.logError(error, query);
-
-            throw error;
-        }
-    }
-
-    async getAllAdmins() {
-        const query = "SELECT * FROM admins";
+    // Get all processed matches
+    async getProcessedMatches() {
+        const query = "SELECT * FROM processed_matches";
         try {
             const [rows, fields] = await db.query(query);
             return rows;
         } catch (error) {
             logger.logError(error, query);
-
             throw error;
         }
     }
+
+    // Get pending matches (signal sent but not completed)
+    async getPendingMatches() {
+        const query = "SELECT * FROM processed_matches WHERE status = 'signal_sent'";
+        try {
+            const [rows, fields] = await db.query(query);
+            return rows;
+        } catch (error) {
+            logger.logError(error, query);
+            throw error;
+        }
+    }
+
+    // Mark match as completed
+    async markMatchAsCompleted(matchId) {
+        const query = `
+            UPDATE processed_matches 
+            SET status = 'completed', completed_at = NOW() 
+            WHERE match_id = ?`;
+        try {
+            const [rows, fields] = await db.query(query, [matchId]);
+            return rows;
+        } catch (error) {
+            logger.logError(error, query);
+            throw error;
+        }
+    }
+
+    // ===== MATCH STATISTICS =====
+
+    // Create match statistics
+    async createMatchStats({
+        match_id, country, league, start_time, home_team, away_team,
+        home_score_final, away_score_final, corners_total,
+        yellowcards_total, redcards_total, pattern_trigger
+    }) {
+        const query = `
+            INSERT INTO match_stats (
+                match_id, country, league, start_time, home_team, away_team,
+                home_score_final, away_score_final, corners_total,
+                yellowcards_total, redcards_total, pattern_trigger, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
+        try {
+            const [rows, fields] = await db.query(query, [
+                match_id, country, league, start_time, home_team, away_team,
+                home_score_final, away_score_final, corners_total,
+                yellowcards_total, redcards_total, pattern_trigger
+            ]);
+            return rows;
+        } catch (error) {
+            logger.logError(error, query);
+            throw error;
+        }
+    }
+
+    // Get all match statistics
+    async getAllMatchStats() {
+        const query = "SELECT * FROM match_stats ORDER BY created_at DESC";
+        try {
+            const [rows, fields] = await db.query(query);
+            return rows;
+        } catch (error) {
+            logger.logError(error, query);
+            throw error;
+        }
+    }
+
+    // Delete match stats by match ID
+    async deleteMatchStatsByMatchId(match_id) {
+        const query = "DELETE FROM match_stats WHERE match_id = ?";
+        try {
+            const [rows, fields] = await db.query(query, [match_id]);
+            return rows;
+        } catch (error) {
+            logger.logError(error, query);
+            throw error;
+        }
+    }
+
+    // ===== ADMIN MANAGEMENT =====
 
     async getAdminByLogin(login) {
         const query = "SELECT * FROM admins WHERE login = ?";
         try {
             const [rows, fields] = await db.query(query, [login]);
-            return rows[0]; // Return the first admin found with the given login
+            return rows[0];
         } catch (error) {
             logger.logError(error, query);
             throw error;
         }
     }
 
+    // ===== UTILITY METHODS =====
+
     async getUsersWithChats() {
         const query = `
-        SELECT users.user_id, users.username, chats.chat_id, chats.chat_name, chats.active
-        FROM users
-        LEFT JOIN chats ON users.user_id = chats.user_id`;
+            SELECT users.user_id, users.username, chats.chat_id, chats.chat_name, chats.active
+            FROM users
+            LEFT JOIN chats ON users.user_id = chats.user_id`;
         try {
             const [rows, fields] = await db.query(query);
-            // Группируем результаты по пользователям
             const usersWithChats = {};
             rows.forEach((row) => {
                 if (!usersWithChats[row.user_id]) {
@@ -530,7 +370,6 @@ class DBController {
                         chats: [],
                     };
                 }
-                // Добавляем чат к соответствующему пользователю
                 if (row.chat_id) {
                     usersWithChats[row.user_id].chats.push({
                         chat_id: row.chat_id,
@@ -539,7 +378,6 @@ class DBController {
                     });
                 }
             });
-            // Преобразуем объект в массив
             return Object.values(usersWithChats);
         } catch (error) {
             logger.logError(error, query);
@@ -548,15 +386,23 @@ class DBController {
     }
 
     async getChatsByUserId(user_id) {
-        const query = `
-            SELECT *
-            FROM chats
-            WHERE user_id = ?`;
+        const query = `SELECT * FROM chats WHERE user_id = ?`;
         try {
             const [rows, fields] = await db.query(query, [user_id]);
             return rows;
         } catch (error) {
             logger.logError(error, query);
+            throw error;
+        }
+    }
+
+    // Direct query method for custom operations
+    async query(sql, params = []) {
+        try {
+            const [rows, fields] = await db.query(sql, params);
+            return rows;
+        } catch (error) {
+            logger.logError(error, { sql, params });
             throw error;
         }
     }
