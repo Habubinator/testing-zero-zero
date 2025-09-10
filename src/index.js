@@ -110,7 +110,7 @@ function start() {
     async function initializeGoogleSheets() {
         try {
             console.log("📊 Initializing Google Sheets...");
-            const sheet = await gSh.getZeroZeroSheet();
+            const sheet = await gSh.getPatternSheet();
             if (sheet) {
                 console.log(`✅ Google Sheets ready: "aisoccer 0:0" sheet available`);
             } else {

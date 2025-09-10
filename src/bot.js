@@ -335,8 +335,8 @@ async function saveZeroZeroMatchStats(match, patterns, stats) {
             pattern_trigger: patternDescription
         };
 
-        await gSh.exportSingleZeroZeroMatch(matchData);
-        console.log(`📊 Saved 0:0 match stats for match ${match.id} to Google Sheets`);
+        await gSh.exportSingleMatchResult(matchData);
+        console.log(`📊 Saved match stats for match ${match.id} to Google Sheets`);
     } catch (error) {
         logger.logError(error, { matchId: match.id, patterns, stats });
     }

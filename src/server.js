@@ -78,8 +78,6 @@ app.delete("/main/api/deleteUser", async (req, res) => {
     const userFromUserList = await db.getUserByUsername(username);
     if (userFromUserList) {
         await db.deleteUser(userFromUserList.user_id);
-        await db.deleteChatsByUserId(userFromUserList.user_id);
-        await db.deleteNotificationsByChatId(userFromUserList.user_id);
         return res.sendStatus(200);
     } else {
         const userFromPending = await db.getPendingUserByUsername(username);
@@ -95,7 +93,7 @@ app.post("/main/api/messageOneChat", async (req, res) => {
     const { chat_id, message } = req.body;
     try {
         if (chat_id && message) {
-            await bot.sendMessage(chat_id, message, {
+            await bot.bot.sendMessage(chat_id, message, {
                 parse_mode: "HTML",
             });
             return res.sendStatus(200);
@@ -110,10 +108,10 @@ app.post("/main/api/messageOneChat", async (req, res) => {
 app.post("/main/api/messageOneUser", async (req, res) => {
     const { user_id, message } = req.body;
     try {
-        if ((user_id, message)) {
+        if (user_id && message) {
             const chats = await db.getChatsByUserId(user_id);
             for (const chat of chats) {
-                bot.sendMessage(chat.chat_id, message, {
+                await bot.bot.sendMessage(chat.chat_id, message, {
                     parse_mode: "HTML",
                 });
             }
@@ -132,7 +130,7 @@ app.post("/main/api/messageAll", async (req, res) => {
         if (message) {
             const chats = await db.getAllChats();
             for (const chat of chats) {
-                bot.sendMessage(chat.chat_id, message, {
+                await bot.bot.sendMessage(chat.chat_id, message, {
                     parse_mode: "HTML",
                 });
             }
