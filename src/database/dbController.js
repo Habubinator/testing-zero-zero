@@ -192,10 +192,10 @@ class DBController {
         }
     }
 
-    // ===== NOTIFICATION MANAGEMENT =====
+    // ===== ZERO ZERO PATTERN NOTIFICATION MANAGEMENT =====
 
-    // Create notification
-    async createNotification(chatId, matchId, messageId, patterns) {
+    // Create 0:0 pattern notification
+    async createZeroZeroNotification(chatId, matchId, messageId, patterns) {
         const query = `
             INSERT INTO notifications (chat_id, match_id, message_id, patterns, created_at)
             VALUES (?, ?, ?, ?, NOW())`;
@@ -208,8 +208,8 @@ class DBController {
         }
     }
 
-    // Get notifications by match ID
-    async getNotificationsByMatchId(matchId) {
+    // Get 0:0 pattern notifications by match ID
+    async getZeroZeroNotificationsByMatchId(matchId) {
         const query = "SELECT * FROM notifications WHERE match_id = ?";
         try {
             const [rows, fields] = await db.query(query, [matchId]);
@@ -220,8 +220,8 @@ class DBController {
         }
     }
 
-    // Delete notifications by match ID
-    async deleteNotificationsByMatchId(matchId) {
+    // Delete 0:0 pattern notifications by match ID
+    async deleteZeroZeroNotificationsByMatchId(matchId) {
         const query = "DELETE FROM notifications WHERE match_id = ?";
         try {
             const [rows, fields] = await db.query(query, [matchId]);
@@ -232,10 +232,10 @@ class DBController {
         }
     }
 
-    // ===== MATCH PROCESSING =====
+    // ===== ZERO ZERO PATTERN MATCH PROCESSING =====
 
-    // Mark match as processed for pattern detection
-    async markMatchAsProcessed(matchId, patterns) {
+    // Mark 0:0 match as processed for pattern detection
+    async markZeroZeroMatchAsProcessed(matchId, patterns) {
         const query = `
             INSERT INTO processed_matches (match_id, patterns, processed_at, status)
             VALUES (?, ?, NOW(), 'signal_sent')
@@ -249,8 +249,8 @@ class DBController {
         }
     }
 
-    // Get all processed matches
-    async getProcessedMatches() {
+    // Get all processed 0:0 matches
+    async getProcessedZeroZeroMatches() {
         const query = "SELECT * FROM processed_matches";
         try {
             const [rows, fields] = await db.query(query);
@@ -261,8 +261,8 @@ class DBController {
         }
     }
 
-    // Get pending matches (signal sent but not completed)
-    async getPendingMatches() {
+    // Get pending 0:0 matches (signal sent but not completed)
+    async getPendingZeroZeroMatches() {
         const query = "SELECT * FROM processed_matches WHERE status = 'signal_sent'";
         try {
             const [rows, fields] = await db.query(query);
@@ -273,8 +273,8 @@ class DBController {
         }
     }
 
-    // Mark match as completed
-    async markMatchAsCompleted(matchId) {
+    // Mark 0:0 match as completed
+    async markZeroZeroMatchAsCompleted(matchId) {
         const query = `
             UPDATE processed_matches 
             SET status = 'completed', completed_at = NOW() 
@@ -286,6 +286,45 @@ class DBController {
             logger.logError(error, query);
             throw error;
         }
+    }
+
+    // ===== LEGACY NOTIFICATION MANAGEMENT (for backward compatibility) =====
+
+    // Create notification (legacy method name)
+    async createNotification(chatId, matchId, messageId, patterns) {
+        return this.createZeroZeroNotification(chatId, matchId, messageId, patterns);
+    }
+
+    // Get notifications by match ID (legacy method name)
+    async getNotificationsByMatchId(matchId) {
+        return this.getZeroZeroNotificationsByMatchId(matchId);
+    }
+
+    // Delete notifications by match ID (legacy method name)
+    async deleteNotificationsByMatchId(matchId) {
+        return this.deleteZeroZeroNotificationsByMatchId(matchId);
+    }
+
+    // ===== LEGACY MATCH PROCESSING (for backward compatibility) =====
+
+    // Mark match as processed for pattern detection (legacy method name)
+    async markMatchAsProcessed(matchId, patterns) {
+        return this.markZeroZeroMatchAsProcessed(matchId, patterns);
+    }
+
+    // Get all processed matches (legacy method name)
+    async getProcessedMatches() {
+        return this.getProcessedZeroZeroMatches();
+    }
+
+    // Get pending matches (legacy method name)
+    async getPendingMatches() {
+        return this.getPendingZeroZeroMatches();
+    }
+
+    // Mark match as completed (legacy method name)
+    async markMatchAsCompleted(matchId) {
+        return this.markZeroZeroMatchAsCompleted(matchId);
     }
 
     // ===== MATCH STATISTICS =====
