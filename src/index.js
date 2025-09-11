@@ -68,7 +68,7 @@ function start() {
 
             try {
                 await db.query(`
-                    DELETE FROM zerozero_processed_matches 
+                    DELETE FROM processed_matches 
                     WHERE processed_at < ? AND status = 'completed'
                 `, [sevenDaysAgo.toISOString()]);
 
