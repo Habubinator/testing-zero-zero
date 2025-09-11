@@ -132,7 +132,7 @@ class gSheetsController {
             await doc.loadInfo();
 
             // Try to find existing sheet
-            let sheet = doc.sheetsByTitle['aisoccer 0:0'];
+            let sheet = doc.sheetsByTitle['AiSoccer 0:0'];
 
             if (!sheet) {
                 console.log('Creating new "aisoccer 0:0" sheet...');
